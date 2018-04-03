@@ -19,18 +19,14 @@ use League\Flysystem\AwsS3v3\AwsS3Adapter as S3Adapter;
 use League\Flysystem\Cached\Storage\Memory as MemoryStore;
 use Illuminate\Contracts\Filesystem\Factory as FactoryContract;
 
+use Illuminate\Support\Manager;
+
 /**
  * @mixin \Illuminate\Contracts\Filesystem\Filesystem
  */
-class FilesystemManager implements FactoryContract
+class FilesystemManager extends Manager  implements FactoryContract
 {
-    /**
-     * The application instance.
-     *
-     * @var \Illuminate\Contracts\Foundation\Application
-     */
-    protected $app;
-
+    
     /**
      * The array of resolved filesystem drivers.
      *
@@ -38,24 +34,7 @@ class FilesystemManager implements FactoryContract
      */
     protected $disks = [];
 
-    /**
-     * The registered custom driver creators.
-     *
-     * @var array
-     */
-    protected $customCreators = [];
-
-    /**
-     * Create a new filesystem manager instance.
-     *
-     * @param  \Illuminate\Contracts\Foundation\Application  $app
-     * @return void
-     */
-    public function __construct($app)
-    {
-        $this->app = $app;
-    }
-
+    
     /**
      * Get a filesystem instance.
      *
@@ -355,30 +334,5 @@ class FilesystemManager implements FactoryContract
     {
         return $this->app['config']['filesystems.cloud'];
     }
-
-    /**
-     * Register a custom driver creator Closure.
-     *
-     * @param  string    $driver
-     * @param  \Closure  $callback
-     * @return $this
-     */
-    public function extend($driver, Closure $callback)
-    {
-        $this->customCreators[$driver] = $callback;
-
-        return $this;
-    }
-
-    /**
-     * Dynamically call the default driver instance.
-     *
-     * @param  string  $method
-     * @param  array   $parameters
-     * @return mixed
-     */
-    public function __call($method, $parameters)
-    {
-        return $this->disk()->$method(...$parameters);
-    }
+        
 }

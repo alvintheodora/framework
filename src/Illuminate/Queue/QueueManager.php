@@ -7,43 +7,14 @@ use InvalidArgumentException;
 use Illuminate\Contracts\Queue\Factory as FactoryContract;
 use Illuminate\Contracts\Queue\Monitor as MonitorContract;
 
+use Illuminate\Support\Manager;
+
 /**
  * @mixin \Illuminate\Contracts\Queue\Queue
  */
-class QueueManager implements FactoryContract, MonitorContract
-{
-    /**
-     * The application instance.
-     *
-     * @var \Illuminate\Foundation\Application
-     */
-    protected $app;
-
-    /**
-     * The array of resolved queue connections.
-     *
-     * @var array
-     */
-    protected $connections = [];
-
-    /**
-     * The array of resolved queue connectors.
-     *
-     * @var array
-     */
-    protected $connectors = [];
-
-    /**
-     * Create a new queue manager instance.
-     *
-     * @param  \Illuminate\Foundation\Application  $app
-     * @return void
-     */
-    public function __construct($app)
-    {
-        $this->app = $app;
-    }
-
+class QueueManager extends Manager implements FactoryContract, MonitorContract
+{       
+    
     /**
      * Register an event listener for the before job event.
      *
@@ -121,28 +92,7 @@ class QueueManager implements FactoryContract, MonitorContract
         return isset($this->connections[$name ?: $this->getDefaultDriver()]);
     }
 
-    /**
-     * Resolve a queue connection instance.
-     *
-     * @param  string  $name
-     * @return \Illuminate\Contracts\Queue\Queue
-     */
-    public function connection($name = null)
-    {
-        $name = $name ?: $this->getDefaultDriver();
-
-        // If the connection has not been resolved yet we will resolve it now as all
-        // of the connections are resolved when they are actually needed so we do
-        // not make any unnecessary connection to the various queue end-points.
-        if (! isset($this->connections[$name])) {
-            $this->connections[$name] = $this->resolve($name);
-
-            $this->connections[$name]->setContainer($this->app);
-        }
-
-        return $this->connections[$name];
-    }
-
+    
     /**
      * Resolve a queue connection.
      *
@@ -174,7 +124,7 @@ class QueueManager implements FactoryContract, MonitorContract
 
         return call_user_func($this->connectors[$driver]);
     }
-
+    
     /**
      * Add a queue connection resolver.
      *
@@ -255,16 +205,5 @@ class QueueManager implements FactoryContract, MonitorContract
     {
         return $this->app->isDownForMaintenance();
     }
-
-    /**
-     * Dynamically pass calls to the default connection.
-     *
-     * @param  string  $method
-     * @param  array   $parameters
-     * @return mixed
-     */
-    public function __call($method, $parameters)
-    {
-        return $this->connection()->$method(...$parameters);
-    }
+    
 }

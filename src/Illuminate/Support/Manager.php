@@ -29,6 +29,20 @@ abstract class Manager
     protected $drivers = [];
 
     /**
+     * The array of resolved queue connectors.
+     *
+     * @var array
+     */
+    protected $connectors = [];
+
+    /**
+     * The array of resolved queue connections.
+     *
+     * @var array
+     */
+    protected $connections = [];
+
+    /**
      * Create a new manager instance.
      *
      * @param  \Illuminate\Foundation\Application  $app
@@ -45,6 +59,7 @@ abstract class Manager
      * @return string
      */
     abstract public function getDefaultDriver();
+    abstract public function resolve($name);
 
     /**
      * Get a driver instance.
@@ -55,6 +70,19 @@ abstract class Manager
     public function driver($driver = null)
     {
         $driver = $driver ?: $this->getDefaultDriver();
+
+        if($this instanceof QueueManager){
+            // If the connection has not been resolved yet we will resolve it now as all
+            // of the connections are resolved when they are actually needed so we do
+            // not make any unnecessary connection to the various queue end-points.
+            if (! isset($this->connections[$driver])) {
+                $this->connections[$driver] = $this->resolve($driver);
+
+                $this->connections[$driver]->setContainer($this->app);
+            }
+
+            return $this->connections[$driver];
+        }
 
         if (is_null($driver)) {
             throw new InvalidArgumentException(sprintf(
@@ -116,7 +144,7 @@ abstract class Manager
      * @return $this
      */
     public function extend($driver, Closure $callback)
-    {
+    {       
         $this->customCreators[$driver] = $callback;
 
         return $this;
